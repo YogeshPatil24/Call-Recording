@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Call Recording</string>
+    <string name="device_description">Call Recording</string>
+    <string name="device_admin_label">Call Recording</string>
+    <string name="BroadCast_Name">com.androids.callrecording.NEW_RECORDING</string>
+    <string name="music_icon">Music Icon</string>
+</resources>
