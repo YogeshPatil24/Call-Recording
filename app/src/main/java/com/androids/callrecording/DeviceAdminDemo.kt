@@ -5,7 +5,7 @@ import android.app.admin.DeviceAdminReceiver
 import android.content.Context
 import android.content.Intent
 
-class DeviceAdminDemo:DeviceAdminReceiver() {
+class DeviceAdminDemo : DeviceAdminReceiver() {
     @SuppressLint("UnsafeProtectedBroadcastReceiver")
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)

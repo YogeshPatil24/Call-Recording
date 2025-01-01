@@ -2,14 +2,17 @@ package com.androids.callrecording.activities
 
 import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.media.MediaMetadataRetriever
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.os.IBinder
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
@@ -35,7 +38,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var viewmodel: CallRecordingViewModel
     private var isReceiverRegistered = false
     private val recordings = mutableListOf<CallRecording>()
-
+    private var recordingService: CallRecordingService? = null
+    private var isBound = false
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     private val requiredPermissions = mutableListOf(
@@ -46,6 +50,8 @@ class MainActivity : AppCompatActivity() {
         android.Manifest.permission.READ_PHONE_NUMBERS,
         android.Manifest.permission.MODIFY_AUDIO_SETTINGS,
         android.Manifest.permission.FOREGROUND_SERVICE,
+        android.Manifest.permission.POST_NOTIFICATIONS,
+        android.Manifest.permission.FOREGROUND_SERVICE_MICROPHONE,
     ).apply {
         if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.Q) {
             add(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -61,11 +67,28 @@ class MainActivity : AppCompatActivity() {
         private const val PERMISSIONS_REQUEST_CODE = 123
     }
 
+
+    private val serviceConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            val binder = service as CallRecordingService.LocalBinder
+            recordingService = binder.getService()
+            isBound = true
+        }
+
+        override fun onServiceDisconnected(p0: ComponentName?) {
+            recordingService = null
+            isBound = false
+        }
+
+    }
+
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         mBinder = DataBindingUtil.setContentView(this, R.layout.activity_main)
         setContentView(mBinder.root)
+        val intent = Intent(this, CallRecordingService::class.java)
+        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
         initUI()
     }
 
@@ -267,5 +290,12 @@ class MainActivity : AppCompatActivity() {
         return null
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        if (isBound) {
+            unbindService(serviceConnection)
+            isBound = false
+        }
+    }
 }
 
